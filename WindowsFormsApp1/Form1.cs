@@ -68,12 +68,19 @@ namespace WindowsFormsApp1
         Double sum_W = 0.00000001;
         String STATE;
         int Firebase_ST = 0;
+        double BPM_B;
+        double GSR_B;
+        String STATE_B;
+
 
         ////////////////////////////////////////////
         /// </summary>
 
         //UdpClient udpServer = new UdpClient(int.Parse(Form1.textBox2.Text));
         Thread th1;
+        Thread th2;
+        String Kon = "";
+        String rel = "";
 
         //Thread th2;
         //th2 = new Thread(new ThreadStart(time_update));
@@ -98,7 +105,10 @@ namespace WindowsFormsApp1
             bgWorker.DoWork += new DoWorkEventHandler(bgWorker_DoWork);
             bgWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(bgWorker_RunWorkerCompleted);
             bgWorker.ProgressChanged += new ProgressChangedEventHandler(bgWorker_ProgressChanged);
-           // th1 = new Thread(send_firebase);
+            th1 = new Thread(send_firebase);
+            th2 = new Thread(send_HTTP);
+            //var json = new 
+            // th1 = new Thread(send_firebase);
             //Thread th1;
             //Thread th2;
 
@@ -161,6 +171,8 @@ namespace WindowsFormsApp1
         Byte[] data;
         String[] msg;
         String[]pass_msg;
+        
+
 
         private void bgWorker_DoWork(object sender, DoWorkEventArgs e) {
 
@@ -197,7 +209,7 @@ namespace WindowsFormsApp1
                         //pass_msg = msg[2].ToString();
                         bgWorker.ReportProgress(1);
                     }
-                    Thread.Sleep(1);
+                    Thread.Sleep(10);
 
 
                 }
@@ -229,6 +241,7 @@ namespace WindowsFormsApp1
 
                 if(con[0].ToString() == "S"){ textBox4.Text = con.ToString();
                     receive_S[receive_S.Length - 1] = a;
+                   
                     Array.Copy(receive_S, 1, receive_S, 0, receive_S.Length - 1);
                     chart1.Series["RAW"].Points.Clear();
 
@@ -238,11 +251,14 @@ namespace WindowsFormsApp1
                     }
 
                 }
+
+
                 if (con[0].ToString() == "B")
                 {
                     textBox5.Text = con.ToString();
 
                     receive_B[receive_B.Length - 1] = a;
+                    ax = a;
                     Array.Copy(receive_B, 1, receive_B, 0, receive_B.Length - 1);
                     chart2.Series["BPM"].Points.Clear();
 
@@ -255,16 +271,57 @@ namespace WindowsFormsApp1
                     label6.Text = a.ToString();
                     Doingprocess();
 
+                    //BPM_B = ax;
+                    //GSR_B = ay;
+                    //STATE_B = STATE;
+
                     if (comboBox1.SelectedIndex.ToString() == "2")
                     {
-                        if (Firebase_ST == 0)
+
+                        String date = DateTime.Now.ToString();
+                        BPM_B = ax;
+                        GSR_B = ay;
+                        STATE_B = textBox8.Text;
+                        convert_Json();
+                       
+
+
+                        //BPM_B = ax;
+                       // GSR_B = ay;
+                        //STATE_B = textBox8.Text;
+
+                        //  Kon = json;
+                       // convert_Json();
+                        Writelog(Kon);
+                        if (th1.IsAlive == false)
                         {
-                            label15.Text = DateTime.Now.ToString();
                             th1 = new Thread(send_firebase);
-                            //th1 = new Thread(send_firebase);
+                            th1.IsBackground = true;
                             th1.Start();
-                            //send_firebase();
                         }
+                        //send_HTTP();
+                        // if (th1.IsAlive == false)
+                        // {
+                            //th1.Abort();
+                         //   th1.Start();
+                             //th1.Abort();
+                            // BPM_B = ax;
+                            // GSR_B = ay;
+                            // STATE_B = textBox8.Text;
+                             //send_firebase();
+                            // Writelog(DateTime.Now.ToString());
+                             //label15.Text = DateTime.Now.ToString();
+                             //th1 = new Thread(send_firebase);
+                             //th1 = new Thread(send_firebase);
+                             //th1 = new Thread(send_firebase);
+                             //th1.Start();
+                             //Writelog(Kon);
+                             //if (th2.IsAlive == false) {
+                                 //th2 = new Thread(send_HTTP);
+                                 //th2.Start();
+                             //}
+                             //send_firebase();
+                       //  }
                     }
                 }
 
@@ -280,6 +337,7 @@ namespace WindowsFormsApp1
                     K = 1024 * (a / 4096.01);
                     G = Convert.ToInt32(K);
                     receive_G[receive_G.Length - 1] = G ;
+                    ay = G;
                     Array.Copy(receive_G, 1, receive_G, 0, receive_G.Length - 1);
                     chart3.Series["GSR"].Points.Clear();
 
@@ -344,7 +402,7 @@ namespace WindowsFormsApp1
 
         private void Writelog(String msg) {
 
-            MethodInvoker invoker = new MethodInvoker(delegate { textBox3.AppendText(msg); });
+            MethodInvoker invoker = new MethodInvoker(delegate { label15.Text = msg; });
             this.BeginInvoke(invoker);
 
         }
@@ -667,44 +725,172 @@ namespace WindowsFormsApp1
 
         }
 
-        public void send_firebase() {
+
+        private void convert_Json() {
+
+            String date = DateTime.Now.ToString();
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(new
+            {
+
+                Time = date.ToString(),
+                BPM = BPM_B,
+                GSR = GSR_B,
+                Emo = STATE_B
+            });
+            Kon = json;
+
+            return;
+
+        }
+
+
+
+        private void send_firebase() {
 
 
             //if (comboBox1.SelectedIndex.ToString() == "2") 
+            //{
+              //  Firebase_ST = 1;
+
+            //String date = DateTime.Now.ToString();
+            //label14.Text = date.ToString();
+            //DateTime date = DateTime.Now;
+            //label14.Text = DateTime.Now.ToString();
+           /* String date = DateTime.Now.ToString();
+
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(new
             {
-                Firebase_ST = 1;
 
-                String date = DateTime.Now.ToString();
-                //label14.Text = date.ToString();
-                //DateTime date = DateTime.Now;
-                 //label14.Text = DateTime.Now.ToString();
-                 var json = Newtonsoft.Json.JsonConvert.SerializeObject(new
-                 {
+                Time = date.ToString(),
+                BPM = BPM_B,
+                GSR = GSR_B,
+                Emo = STATE_B
+            });
+            Kon = json;*/
 
-                     Time = DateTime.Now.ToString(),
-                     BPM = receive_B[receive_B.Length - 1],
-                     GSR = receive_G[receive_G.Length - 1],
-                     Emo = textBox8.Text,
-                 });
 
-                 var request = WebRequest.CreateHttp("https://emotional-monitoring.firebaseio.com/HEART/.json");
-                 request.Method = "POST";
-                 request.ContentType = "application/json";
-                 var buffer = Encoding.UTF8.GetBytes(json);
-                 request.ContentLength = buffer.Length;
-                 request.GetRequestStream().Write(buffer, 0, buffer.Length);
-                var response = request.GetResponse();
-                json = (new StreamReader(response.GetResponseStream())).ReadToEnd();
-                //Thread.Sleep(1000);
-                //Firebase_ST = 0;
-                Thread.Sleep(5000);
-                Firebase_ST = 0;
-            }
-            return;
+            // Product product = new Product();
+            // product.Name = "Apple";
+            // product.Expiry = new DateTime(2008, 12, 28);
+            //  product.Sizes = new string[] { "Small" };
+
+            // string json = JsonConvert.SerializeObject(product);
+            // {
+            //   "Name": "Apple",
+            //   "Expiry": "2008-12-28T00:00:00",
+            //   "Sizes": [
+            //     "Small"
+            //   ]
+            // }
+
+            //Thread.Sleep(1000);
+
+            //Kon = json;
+            Thread.Sleep(10);
+            // send_HTTP();
+            //send_HTTP();
+            // if (th2.IsAlive == false) {
+            //     th2.Start();
+            // }
+            //Thread.Sleep(10);
+            /* var json = Newtonsoft.Json.JsonConvert.SerializeObject(new
+             {
+
+                 Time = DateTime.Now.ToString(),
+                 BPM = BPM_B,
+                 GSR = GSR_B,
+                 Emo = STATE_B
+             });*/
+            var request = WebRequest.CreateHttp("https://emotional-monitoring.firebaseio.com/HEART/.json");
+            request.Accept = "application/json";
+            request.Method = "POST";
+            request.ContentType = "application/json";
+            var buffer = Encoding.UTF8.GetBytes(Kon);
+            request.ContentLength = buffer.Length;
+            request.GetRequestStream().Write(buffer, 0, buffer.Length);
+            Thread.Sleep(100);
+
+            //var response = request.GetResponse();
+            //rel = (new StreamReader(response.GetResponseStream())).ReadToEnd();
+           // response.Close();
+            request.Abort();
+            Thread.Sleep(100);
+
+            //send_HTTP();
+              //var http = (HttpWebRequest)WebRequest.Create(new Uri("https://emotional-monitoring.firebaseio.com/HEART/.json"));
+              //http.Accept = "application/json";
+              //http.ContentType = "application/json";
+              //http.Method = "POST";
+
+
+             /*string parsedContent = json;
+             ASCIIEncoding encoding = new ASCIIEncoding();
+             Byte[] bytes = encoding.GetBytes(parsedContent);   
+
+            Stream newStream = http.GetRequestStream();
+            newStream.Write(bytes, 0, bytes.Length);
+            newStream.Close();
+
+            var response = http.GetResponse();
+
+             var stream = response.GetResponseStream();
+            var sr = new StreamReader(stream);
+            var content = sr.ReadToEnd();
+             Thread.Sleep(10);*/
+
+
+
+
+
+
+            //request.Abort();
+
+            //Firebase_ST = 0;
+            //Thread.Sleep(1000);
+            // Firebase_ST = 0;
+            //}
+            //return;
             //return;
 
-
+            //th1.Abort();
+            //return;
         }
+
+
+
+
+        public void send_HTTP() {
+
+           // try
+            //{
+                var request = WebRequest.CreateHttp("https://emotional-monitoring.firebaseio.com/HEART/.json");
+                request.Accept = "application/json";
+                request.Method = "POST";
+                request.ContentType = "application/json";
+                var buffer = Encoding.UTF8.GetBytes(Kon);
+                request.ContentLength = buffer.Length;
+                request.GetRequestStream().Write(buffer, 0, buffer.Length);
+                Thread.Sleep(100);
+
+                var response = request.GetResponse();
+                rel = (new StreamReader(response.GetResponseStream())).ReadToEnd();
+                //response.Close();
+                request.Abort();
+                Thread.Sleep(100);
+            //}
+           // catch (Exception) { }
+
+            //return;
+        }
+
+
+
+
+
+
+
+
+
 
         private void label14_Click(object sender, EventArgs e)
         {
